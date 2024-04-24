@@ -1,0 +1,2 @@
+# StarMade ServerPanel
+ 
