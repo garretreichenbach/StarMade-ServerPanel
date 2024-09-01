@@ -1,0 +1,9 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="ServerStarter:jar">
+    <output-path>$PROJECT_DIR$/../../Game Files/StarMade Files/Universe Update</output-path>
+    <root id="archive" name="ServerStarter.jar">
+      <element id="module-output" name="ServerStarter" />
+      <element id="library" level="project" name="lib" />
+    </root>
+  </artifact>
+</component>
