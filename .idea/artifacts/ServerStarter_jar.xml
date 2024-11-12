@@ -3,7 +3,8 @@
     <output-path>$PROJECT_DIR$/../../Game Files/StarMade Files/Universe Update</output-path>
     <root id="archive" name="ServerStarter.jar">
       <element id="module-output" name="ServerStarter" />
-      <element id="library" level="project" name="lib" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/flatlaf-3.1.1.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/rsyntaxtextarea-3.5.2.jar" path-in-jar="/" />
     </root>
   </artifact>
 </component>

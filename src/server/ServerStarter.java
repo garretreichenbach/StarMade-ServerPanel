@@ -14,6 +14,7 @@ import server.data.documents.DocumentFile;
 import server.ui.FileTreeModel;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.geom.RoundRectangle2D;
 import java.io.File;
 import java.nio.file.Files;
@@ -231,27 +232,6 @@ public class ServerStarter extends JFrame {
 							RSyntaxDocument document = new RSyntaxDocument(DocumentFile.DocumentType.getType(file.getName()).style);
 							document.insertString(0, documentText, null);
 							RSyntaxTextArea editorTextPane = new RSyntaxTextArea(document);
-							RTextScrollPane scrollPane = new RTextScrollPane(editorTextPane);
-							editorTextPane.setCodeFoldingEnabled(true);
-							editorTextPane.setPaintTabLines(true);
-							editorTextPane.setAutoIndentEnabled(true);
-							editorTextPane.setBracketMatchingEnabled(true);
-							editorTextPane.setCloseCurlyBraces(true);
-							fileEditorPane.addTab(file.getName(), scrollPane);
-							openDocuments.add(file.getName());
-							JPanel panel = new JPanel();
-							JLabel label = new JLabel(file.getName());
-							panel.add(label);
-							JButton closeButton = new JButton(UIManager.getIcon("InternalFrame.closeIcon"));
-							closeButton.addActionListener(e1 -> {
-								fileEditorPane.removeTabAt(openDocuments.indexOf(file.getName()));
-								openDocuments.remove(file.getName());
-							});
-							closeButton.setBorder(BorderFactory.createEmptyBorder());
-							closeButton.setOpaque(false);
-							panel.add(closeButton);
-							fileEditorPane.setTabComponentAt(openDocuments.indexOf(file.getName()), panel);
-							fileEditorPane.setSelectedIndex(openDocuments.indexOf(file.getName()));
 
 							JMenuBar menuBar = new JMenuBar();
 							JMenu fileMenu = new JMenu("File");
@@ -293,9 +273,35 @@ public class ServerStarter extends JFrame {
 							editMenu.addSeparator();
 							editMenu.add(createMenuItem(RTextArea.getAction(RTextArea.SELECT_ALL_ACTION)));
 							menuBar.add(editMenu);
-							menuBar.setVisible(true);
+							menuBar.setMaximumSize(new Dimension(Integer.MAX_VALUE, 32));
+							
+							RTextScrollPane scrollPane = new RTextScrollPane(editorTextPane);
+							editorTextPane.setCodeFoldingEnabled(true);
+							editorTextPane.setPaintTabLines(true);
+							editorTextPane.setAutoIndentEnabled(true);
+							editorTextPane.setBracketMatchingEnabled(true);
+							editorTextPane.setCloseCurlyBraces(true);
 
-							filesPanel.add(menuBar);
+							JPanel editorContainerPanel = new JPanel();
+							editorContainerPanel.setLayout(new BoxLayout(editorContainerPanel, BoxLayout.Y_AXIS));
+							editorContainerPanel.add(menuBar);
+							editorContainerPanel.add(scrollPane);
+
+							fileEditorPane.addTab(file.getName(), editorContainerPanel);
+							openDocuments.add(file.getName());
+							JPanel panel = new JPanel();
+							JLabel label = new JLabel(file.getName());
+							panel.add(label);
+							JButton closeButton = new JButton(UIManager.getIcon("InternalFrame.closeIcon"));
+							closeButton.addActionListener(e1 -> {
+								fileEditorPane.removeTabAt(openDocuments.indexOf(file.getName()));
+								openDocuments.remove(file.getName());
+							});
+							closeButton.setBorder(BorderFactory.createEmptyBorder());
+							closeButton.setOpaque(false);
+							panel.add(closeButton);
+							fileEditorPane.setTabComponentAt(openDocuments.indexOf(file.getName()), panel);
+							fileEditorPane.setSelectedIndex(openDocuments.indexOf(file.getName()));
 						} catch(Exception exception) {
 							exception.printStackTrace();
 						}
