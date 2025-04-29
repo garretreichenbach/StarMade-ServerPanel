@@ -11,6 +11,7 @@ import server.data.config.ConfigFile;
 import server.data.config.PanelConfigManager;
 import server.data.config.ServerConfig;
 import server.data.documents.DocumentFile;
+import server.ui.DatabaseTable;
 import server.ui.FileTreeModel;
 
 import javax.swing.*;
@@ -27,6 +28,13 @@ import java.util.ArrayList;
  * @author Garret Reichenbach
  */
 public class ServerStarter extends JFrame {
+
+	public static final int CONTROL_PANEL = 0;
+	public static final int ACTIONS_PANEL = 1;
+	public static final int LOGS_PANEL = 2;
+	public static final int CONFIG_PANEL = 3;
+	public static final int FILES_PANEL = 4;
+	public static final int DATABASE_PANEL = 5;
 
 	private static final ArrayList<String> args = new ArrayList<>();
 	private static String gameVersion;
@@ -64,7 +72,9 @@ public class ServerStarter extends JFrame {
 	private JCheckBox requireAuthenticationCheckBox;
 	private JTabbedPane fileEditorPane;
 	private JPanel filesPanel;
+	private JTabbedPane databaseTabs;
 	private ArrayList<String> openDocuments = new ArrayList<>();
+	private String currentWorldName = "";
 
 	public ServerStarter() {
 		setUndecorated(true);
@@ -76,11 +86,12 @@ public class ServerStarter extends JFrame {
 		initLogsPane();
 		initConfigPane();
 		initFilePane();
+		initDatabasePane();
 	}
 
 	public static void main(String[] args) {
 		if(args != null && args.length > 0) gameVersion = args[0];
-		else gameVersion = "0.301.100";
+		else gameVersion = "0.302.100";
 		if(PanelConfigManager.ConfigValues.THEME.getValue().equals("DARK")) FlatDarkLaf.setup();
 		else FlatLightLaf.setup();
 		JFrame frame = new JFrame("StarMade Server [" + gameVersion + "]");
@@ -155,12 +166,17 @@ public class ServerStarter extends JFrame {
 		});
 		serverNameField.setText(ServerConfig.SERVER_LIST_NAME.getValue().toString());
 		serverNameField.addActionListener(e -> ServerConfig.SERVER_LIST_NAME.setValue(serverNameField.getText()));
+		
 		serverDescriptionField.setText(ServerConfig.SERVER_LIST_DESCRIPTION.getValue().toString());
 		serverDescriptionField.addActionListener(e -> ServerConfig.SERVER_LIST_DESCRIPTION.setValue(serverDescriptionField.getText()));
+		
 		serverIPField.setText((ServerConfig.HOST_NAME_TO_ANNOUNCE_TO_SERVER_LIST.getValue().toString().contains(":") ? ServerConfig.HOST_NAME_TO_ANNOUNCE_TO_SERVER_LIST.getValue().toString().split(":")[0] : ServerConfig.HOST_NAME_TO_ANNOUNCE_TO_SERVER_LIST.getValue().toString()));
 		serverIPField.addActionListener(e -> ServerConfig.HOST_NAME_TO_ANNOUNCE_TO_SERVER_LIST.setValue((serverPortField.getText().isEmpty() ? serverIPField.getText() : serverIPField.getText() + ":" + serverPortField.getText())));
+		
 		serverPortField.setText((ServerConfig.HOST_NAME_TO_ANNOUNCE_TO_SERVER_LIST.getValue().toString().contains(":") ? ServerConfig.HOST_NAME_TO_ANNOUNCE_TO_SERVER_LIST.getValue().toString().split(":")[1] : ""));
 		serverPortField.addActionListener(e -> ServerConfig.HOST_NAME_TO_ANNOUNCE_TO_SERVER_LIST.setValue((serverIPField.getText().isEmpty() ? serverPortField.getText() : serverIPField.getText() + ":" + serverPortField.getText())));
+
+		publicServerCheckBox.addChangeListener(e -> ServerConfig.ANNOUNCE_SERVER_TO_SERVERLIST.setValue(publicServerCheckBox.isSelected()));
 		useAuthenticationCheckBox.addChangeListener(e -> ServerConfig.USE_STARMADE_AUTHENTICATION.setValue(useAuthenticationCheckBox.isSelected()));
 		requireAuthenticationCheckBox.addChangeListener(e -> ServerConfig.REQUIRE_STARMADE_AUTHENTICATION.setValue(requireAuthenticationCheckBox.isSelected() && useAuthenticationCheckBox.isSelected()));
 		maxPlayers.addChangeListener(e -> ServerConfig.MAX_CLIENTS.setValue(maxPlayers.getValue()));
@@ -305,6 +321,12 @@ public class ServerStarter extends JFrame {
 						} catch(Exception exception) {
 							exception.printStackTrace();
 						}
+					} else if(file.isDirectory()) {
+						if(file.getParentFile().getName().endsWith("server-database")) {
+							openDatabaseManager(file.getName());
+						} else if(file.getName().equals("logs")) {
+							tabPanel.setSelectedIndex(LOGS_PANEL);
+						}
 					}
 				}
 			}
@@ -321,5 +343,119 @@ public class ServerStarter extends JFrame {
 				return item;
 			}
 		});
+	}
+
+	private void initDatabasePane() {
+		databaseTabs.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
+		databaseTabs.setTabPlacement(SwingConstants.LEFT);
+		databaseTabs.setPreferredSize(new Dimension(400, 300));
+		databaseTabs.setMinimumSize(new Dimension(400, 300));
+		databaseTabs.setMaximumSize(new Dimension(400, 300));
+		File serverDatabaseFolder = new File(StarMadeUtils.getSMFolder(), "server-database");
+		File[] worlds = serverDatabaseFolder.listFiles();
+		if(worlds != null) {
+			for(File world : worlds) {
+				if(world.isDirectory()) {
+					JPanel worldPanel = new JPanel();
+					worldPanel.setLayout(new BoxLayout(worldPanel, BoxLayout.Y_AXIS));
+					worldPanel.add(new JLabel(world.getName()));
+					databaseTabs.addTab(world.getName(), worldPanel);
+
+					DatabaseTable table = new DatabaseTable(world);
+					JScrollPane scrollPane = new JScrollPane();
+					scrollPane.setViewportView(table);
+					worldPanel.add(scrollPane);
+
+					JPanel buttonPanel = new JPanel();
+					buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.X_AXIS));
+					buttonPanel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
+
+					JButton openButton = new JButton("Refresh");
+					openButton.addActionListener(e -> {
+						try {
+							table.refresh();
+						} catch(Exception exception) {
+							exception.printStackTrace();
+						}
+					});
+
+					JButton searchButton = new JButton("Search");
+					searchButton.addActionListener(e -> {
+						JDialog searchDialog = new JDialog();
+						searchDialog.setModal(true);
+						searchDialog.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+						searchDialog.setSize(300, 200);
+						searchDialog.setLocationRelativeTo(null);
+						searchDialog.setLayout(new BorderLayout());
+						JPanel searchPanel = new JPanel();
+						searchPanel.setLayout(new BoxLayout(searchPanel, BoxLayout.Y_AXIS));
+
+						JPanel searchTypesButtonsPanel = new JPanel();
+						searchTypesButtonsPanel.setLayout(new BoxLayout(searchTypesButtonsPanel, BoxLayout.X_AXIS));
+						searchTypesButtonsPanel.setBorder(BorderFactory.createTitledBorder("Search Tools"));
+						JButton searchByNameButton = new JButton("Search by Name");
+						JButton searchByIDButton = new JButton("Search by ID");
+						JButton searchByTypeButton = new JButton("Search by Type");
+						JButton searchBySectorButton = new JButton("Search by Sector");
+						JButton searchBySystemButton = new JButton("Search by System");
+
+						searchTypesButtonsPanel.add(searchByNameButton);
+						searchTypesButtonsPanel.add(searchByIDButton);
+						searchTypesButtonsPanel.add(searchByTypeButton);
+						searchTypesButtonsPanel.add(searchBySectorButton);
+						searchTypesButtonsPanel.add(searchBySystemButton);
+						searchPanel.add(searchTypesButtonsPanel);
+
+						searchByNameButton.addActionListener(e1 -> {
+							String name = JOptionPane.showInputDialog("Enter name to search for:");
+							if(name != null && !name.isEmpty()) {
+								table.searchByName(name);
+							}
+						});
+						searchByIDButton.addActionListener(e1 -> {
+							String id = JOptionPane.showInputDialog("Enter ID to search for:");
+							if(id != null && !id.isEmpty()) {
+								table.searchByID(id);
+							}
+						});
+						searchByTypeButton.addActionListener(e1 -> {
+							String type = JOptionPane.showInputDialog("Enter type to search for:");
+							if(type != null && !type.isEmpty()) {
+								table.searchByType(type);
+							}
+						});
+						searchBySectorButton.addActionListener(e1 -> {
+							String sector = JOptionPane.showInputDialog("Enter sector to search for:");
+							if(sector != null && !sector.isEmpty()) {
+								table.searchBySector(sector);
+							}
+						});
+						searchBySystemButton.addActionListener(e1 -> {
+							String system = JOptionPane.showInputDialog("Enter system to search for:");
+							if(system != null && !system.isEmpty()) {
+								table.searchBySystem(system);
+							}
+						});
+						searchDialog.add(searchPanel, BorderLayout.CENTER);
+						searchDialog.setVisible(true);
+					});
+
+					JComboBox<String> typeDropdown = new JComboBox<>();
+					typeDropdown.addItem("All");
+					typeDropdown.addItem("Players");
+					typeDropdown.addItem("Ships");
+					typeDropdown.addItem("Stations");
+					typeDropdown.addItem("Planets");
+					typeDropdown.addItem("Asteroids");
+
+				}
+			}
+		}
+	}
+
+	private void openDatabaseManager(String worldName) {
+		currentWorldName = worldName;
+		tabPanel.setSelectedIndex(DATABASE_PANEL);
+
 	}
 }

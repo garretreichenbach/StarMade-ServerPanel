@@ -5,6 +5,7 @@ import server.data.config.PanelConfigManager;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 
 /**
@@ -21,7 +22,7 @@ public class StarMadeUtils {
 	public static void start(String gameVersion, ArrayList<String> args) {
 		StarMadeUtils.gameVersion = gameVersion;
 		StarMadeUtils.args.addAll(args);
-		int javaVersion = 18;
+		int javaVersion = 23;
 		if(gameVersion.startsWith("0.1") || gameVersion.startsWith("0.2")) javaVersion = 8;
 		String javaPath = OperatingSystem.getJavaPath(javaVersion);
 
@@ -51,7 +52,7 @@ public class StarMadeUtils {
 	private static void sendCommandRaw(String command, Object... args) {
 		if(process != null) {
 			try {
-				process.getOutputStream().write((command + " " + args + "\n").getBytes());
+				process.getOutputStream().write((command + " " + args + "\n").getBytes(StandardCharsets.UTF_8));
 				process.getOutputStream().flush();
 			} catch(IOException exception) {
 				exception.printStackTrace();

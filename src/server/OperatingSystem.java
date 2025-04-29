@@ -34,7 +34,7 @@ public enum OperatingSystem {
 	}
 
 	public static String getJavaPath(int version) {
-		return String.format(currentOS.javaPath, version);
+		return (new File(String.format(currentOS.javaPath, version))).getAbsolutePath();
 	}
 
 	/**

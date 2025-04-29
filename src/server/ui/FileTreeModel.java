@@ -39,7 +39,11 @@ public class FileTreeModel implements TreeModel {
 		if(file.isDirectory()) {
 			String[] children = file.list();
 			if(children == null) return 0;
-			else return children.length;
+			else {
+				//There's too many files in the server-database folder to show, we use the Database Manager window for this.
+				if(file.getParentFile().getName().equals("server-database")) return 0;
+				return children.length;
+			}
 		} else return 0;
 	}
 
