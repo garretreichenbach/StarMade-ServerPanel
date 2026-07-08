@@ -1,0 +1,30 @@
+{
+  "name": "starmade-server-panel",
+  "version": "0.1.0",
+  "description": "Web-based control panel for StarMade dedicated servers. Based on the StarMade Launcher v4 server panel.",
+  "private": true,
+  "type": "module",
+  "author": "VideoGoose",
+  "license": "UNLICENSED",
+  "workspaces": [
+    "shared",
+    "server",
+    "web"
+  ],
+  "scripts": {
+    "build": "npm run build --workspace @ssp/shared && npm run build --workspace @ssp/web && npm run build --workspace @ssp/server",
+    "dev": "concurrently -k -n server,web -c blue,magenta \"npm:dev:server\" \"npm:dev:web\"",
+    "dev:server": "npm run dev --workspace @ssp/server",
+    "dev:web": "npm run dev --workspace @ssp/web",
+    "start": "npm run start --workspace @ssp/server",
+    "test": "npm run test --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "typescript": "~5.8.2"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
